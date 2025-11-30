@@ -6,10 +6,6 @@ import TextInput from '@/Components/TextInput';
 import ConversationItem from '@/Components/App/ConversationItem';
 
 const ChatLayout = ({ children }) => {
-    const page = usePage();
-    const conversations = page.props.conversations;
-    const selectedConversation = page.props.selectedConversation;
-
     const [onlineUsers, setOnlineUsers] = useState({});
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
