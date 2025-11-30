@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#app {
+    height: 100vh;
+}
+/* Avatar wrapper */
+.avatar {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dot chung */
+.avatar::after {
+    content: "";
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 12px;      /* size dot */
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white; /* viền trắng */
+    background-color: #6b7280; /* gray-500 */
+}
+
+/* Online (màu xanh) */
+.avatar.online::after {
+    background-color: #22c55e; /* green-500 */
+}
+
+/* Offline (màu đỏ/xám) */
+.avatar.offline::after {
+    background-color: #6b7280; /* gray-500 */
+}
