@@ -1,56 +1,132 @@
 import ChatLayout from '@/Layouts/ChatLayout';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 import ConversationHeader from '@/Components/App/ConversationHeader';
 import MessageItem from '@/Components/App/MessageItem';
 import MessageInput from '@/Components/App/MessageInput';
 import { useEventBus } from '@/EventBus';
+import axios from 'axios';
 
 function Home({ selectedConversation, messages }) {
-    const [localMessages, setLocalMessages] = useState([])
-    const messagesCtrRef = useRef(null)
+    const [localMessages, setLocalMessages] = useState([]);
+    const messagesCtrRef = useRef(null);
     const { on } = useEventBus();
+    const loadMoreIntersect = useRef(null);
+    const [noMoreMessages, setNoMoreMessages] = useState(false);
 
-    // useEffect chạy mỗi khi selectedConversation thay đổi
+    // -----------------------------
+    // Khi conversation hoặc messages thay đổi → set localMessages
+    // -----------------------------
     useEffect(() => {
-        // setTimeout 10ms để đảm bảo DOM đã render xong
-        // Nếu scroll luôn mà DOM chưa render, scrollHeight sẽ sai
+        if (messages && messages.data) {
+            // reverse để tin nhắn cũ ở trên cùng
+            setLocalMessages([...messages.data].reverse());
+        } else {
+            setLocalMessages([]);
+        }
+        setNoMoreMessages(false);
+
+        // Scroll xuống cuối khi load conversation mới
         setTimeout(() => {
-            // scroll container xuống cuối
-            // messagesCtrRef.current.scrollTop = scrollHeight
-            messagesCtrRef.current.scrollTop = messagesCtrRef.current.scrollHeight
-        }, 10)
-
-        const offCreated = on("message.created", (message) => {
-            console.log("message.created received", message);
-            let sender_id = parseInt(message.sender_id)
-            let receiver_id = parseInt(message.receiver_id)
-
-            if (
-                selectedConversation &&
-                selectedConversation.is_group &&
-                selectedConversation.id === message.group_id
-            ) {
-                setLocalMessages(prev => [...prev, message]);
+            if (messagesCtrRef.current) {
+                messagesCtrRef.current.scrollTop = messagesCtrRef.current.scrollHeight;
             }
+        }, 50);
+    }, [messages]);
 
-            if (
-                selectedConversation &&
-                (selectedConversation.id === sender_id ||
-                selectedConversation.id === receiver_id)
-            ) {
-                setLocalMessages(prev => [...prev, message]);
+    // -----------------------------
+    // Nhận tin nhắn mới từ EventBus
+    // -----------------------------
+    useEffect(() => {
+        const offCreated = on("message.created", (message) => {
+            if (!selectedConversation) return;
+            console.log(selectedConversation)
+            const isCurrentConversation =
+                (selectedConversation.is_group && selectedConversation.id === parseInt(message.group_id)) ||
+                (!selectedConversation.is_group && 
+                    (selectedConversation.id === message.sender_id || selectedConversation.id === parseInt(message.receiver_id))
+                );
+
+            if (isCurrentConversation) {
+                setLocalMessages(prev => {
+                    // tránh duplicate message
+                    if (prev.some(m => m.id === message.id)) return prev;
+                    return [...prev, message];
+                });
+
+                // Scroll xuống cuối khi nhận tin nhắn mới
+                setTimeout(() => {
+                    if (messagesCtrRef.current) {
+                        messagesCtrRef.current.scrollTop = messagesCtrRef.current.scrollHeight;
+                    }
+                }, 50);
             }
         });
 
         return () => offCreated();
+    }, [selectedConversation, on]);
 
-    }, [selectedConversation]) // dependency: chạy lại khi người dùng chọn conversation khác
+    // -----------------------------
+    // Load thêm tin nhắn cũ
+    // -----------------------------
+    const loadMoreMessage = useCallback(() => {
+        if (!localMessages || localMessages.length === 0 || noMoreMessages) return;
 
+        const firstMessage = localMessages[0];
 
+        const scrollHeightBefore = messagesCtrRef.current?.scrollHeight || 0;
+
+        axios.get(route("message.loadOlder", firstMessage.id))
+            .then(({ data }) => {
+                if (!data.data || data.data.length === 0) {
+                    setNoMoreMessages(true);
+                    return;
+                }
+
+                setLocalMessages(prev => {
+                    // tránh duplicate
+                    const newMessages = data.data.filter(msg => !prev.some(m => m.id === msg.id));
+                    return [...newMessages.reverse(), ...prev];
+                });
+
+                // Giữ scroll position sau khi prepend message
+                setTimeout(() => {
+                    if (messagesCtrRef.current) {
+                        const scrollHeightAfter = messagesCtrRef.current.scrollHeight;
+                        messagesCtrRef.current.scrollTop = scrollHeightAfter - scrollHeightBefore;
+                    }
+                }, 20);
+            })
+            .catch(err => console.error(err));
+    }, [localMessages, noMoreMessages]);
+
+    // -----------------------------
+    // IntersectionObserver để load thêm tin nhắn cũ
+    // -----------------------------
     useEffect(() => {
-        setLocalMessages(messages ? messages.data.reverse() : [])
-    }, [messages])
+        if (!messagesCtrRef.current || noMoreMessages) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        loadMoreMessage();
+                    }
+                });
+            },
+            {
+                root: messagesCtrRef.current,
+                rootMargin: "0px 0px 250px 0px",
+                threshold: 0
+            }
+        );
+
+        if (loadMoreIntersect.current) {
+            observer.observe(loadMoreIntersect.current);
+        }
+
+        return () => observer.disconnect();
+    }, [loadMoreMessage, noMoreMessages]);
 
     return (
         <>
@@ -64,35 +140,23 @@ function Home({ selectedConversation, messages }) {
                             Choose a chat on the left to start messaging.
                         </p>
                     </div>
-
                     <ChatBubbleLeftRightIcon className="w-28 h-28 text-slate-300 mt-10 animate-pulse" />
                 </div>
             )}
 
             {messages && (
                 <>
-                    <ConversationHeader 
-                        selectedConversation={selectedConversation}
-                    />
-                    <div
-                        ref={messagesCtrRef}
-                        className='flex-1 overflow-y-auto p-5'
-                    >
-                        {localMessages.length === 0 && (
-                            <div className='flex justify-center item-center h-full'>
-                                <div className='text-lg text-slate-200'>
-                                    No Message Found
-                                </div>
+                    <ConversationHeader selectedConversation={selectedConversation} />
+                    <div ref={messagesCtrRef} className='flex-1 overflow-y-auto p-5'>
+                        {localMessages.length === 0 ? (
+                            <div className='flex justify-center items-center h-full'>
+                                <div className='text-lg text-slate-200'>No Message Found</div>
                             </div>
-                        )}
-
-                        {localMessages.length > 0 && (
+                        ) : (
                             <div className='flex-1 flex flex-col'>
-                                {localMessages.map((message) => (
-                                    <MessageItem 
-                                        key={message.id}
-                                        message={message}
-                                    />
+                                <div ref={loadMoreIntersect}></div>
+                                {localMessages.map(message => (
+                                    <MessageItem key={message.id} message={message} />
                                 ))}
                             </div>
                         )}
@@ -104,10 +168,6 @@ function Home({ selectedConversation, messages }) {
     );
 }
 
-Home.layout = (page) => {
-    return (
-        <ChatLayout children={page} />
-    )
-}
+Home.layout = (page) => <ChatLayout>{page}</ChatLayout>;
 
-export default Home
+export default Home;

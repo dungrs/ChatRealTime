@@ -26,19 +26,19 @@ const MessageInput = ({ selectedConversation }) => {
                 );
                 console.log(progress);
             }
-        }).then((response) => {
+        }).then(() => {
             setMessageSending(false);
             setNewMessage("");
-        }).catch((error) => {
+        }).catch(() => {
             setMessageSending(false);
         })
     };
 
     return (
-        <div className="flex flex-col sm:flex-row items-end gap-2 p-3 border-t border-slate-700 bg-slate-900">
-            
+        <div className="flex flex-row items-center gap-2 p-3 border-t border-slate-700 bg-slate-900 w-full">
+
             {/* Left icons */}
-            <div className="flex gap-2 order-1">
+            <div className="flex flex-row gap-2 flex-shrink-0">
                 <label className="p-2 rounded-full hover:bg-slate-700 cursor-pointer relative">
                     <PaperClipIcon className="w-6 h-6 text-slate-300"/>
                     <input type="file" multiple className="absolute inset-0 opacity-0 cursor-pointer"/>
@@ -50,15 +50,17 @@ const MessageInput = ({ selectedConversation }) => {
             </div>
 
             {/* Input */}
-            <div className="flex-1 flex items-end gap-2 order-2">
+            <div className="flex-1 flex items-end gap-2">
                 <NewMessageInput
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onSend={handleSend}
                 />
+
+                {/* Send button */}
                 <button
                     onClick={handleSend}
-                    className={`flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50`}
+                    className={`flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 shrink-0`}
                     disabled={messageSending || !newMessage.trim()}
                 >
                     {messageSending && <span className="loading loading-spinner loading-xs"></span>}
@@ -68,7 +70,7 @@ const MessageInput = ({ selectedConversation }) => {
             </div>
 
             {/* Right icons */}
-            <div className="flex gap-2 order-3">
+            <div className="flex flex-row gap-2 flex-shrink-0">
                 <button className="p-2 rounded-full hover:bg-slate-700">
                     <FaceSmileIcon className="w-6 h-6 text-slate-300"/>
                 </button>
