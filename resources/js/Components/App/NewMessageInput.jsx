@@ -34,7 +34,7 @@ const NewMessageInput = ({ value, onChange, onSend }) => {
             onKeyDown={onInputKeyDown}
             onChange={onChangeEvent}
             className="w-full rounded-xl border border-slate-600 px-3 py-2 text-slate-700 resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 max-h-36 transition-all
-                       min-h-[38px] sm:min-h-[44px] sm:text-base text-sm"
+                       min-h-[38px] sm:min-h-[44px] sm:text-base text-sm mt-3"
         />
     );
 };

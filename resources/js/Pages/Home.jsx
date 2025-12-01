@@ -6,6 +6,7 @@ import MessageItem from '@/Components/App/MessageItem';
 import MessageInput from '@/Components/App/MessageInput';
 import { useEventBus } from '@/EventBus';
 import axios from 'axios';
+import AttachmentPreviewModal from '@/Components/App/AttachmentPreviewModal';
 
 function Home({ selectedConversation, messages }) {
     const [localMessages, setLocalMessages] = useState([]);
@@ -13,6 +14,8 @@ function Home({ selectedConversation, messages }) {
     const { on } = useEventBus();
     const loadMoreIntersect = useRef(null);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
+    const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+    const [previewAttachment, setPreviewAttachment] = useState({})
 
     // -----------------------------
     // Khi conversation hoặc messages thay đổi → set localMessages
@@ -128,6 +131,14 @@ function Home({ selectedConversation, messages }) {
         return () => observer.disconnect();
     }, [loadMoreMessage, noMoreMessages]);
 
+    const onAttachmentClick = (attachments, ind) => {
+        setPreviewAttachment({
+            attachments,
+            ind
+        });
+        setShowAttachmentPreview(true)
+    }
+
     return (
         <>
             {!messages && (
@@ -156,7 +167,11 @@ function Home({ selectedConversation, messages }) {
                             <div className='flex-1 flex flex-col'>
                                 <div ref={loadMoreIntersect}></div>
                                 {localMessages.map(message => (
-                                    <MessageItem key={message.id} message={message} />
+                                    <MessageItem 
+                                        key={message.id} 
+                                        message={message} 
+                                        onAttachmentClick={onAttachmentClick}
+                                    />
                                 ))}
                             </div>
                         )}
@@ -164,6 +179,16 @@ function Home({ selectedConversation, messages }) {
                     <MessageInput selectedConversation={selectedConversation} />
                 </>
             )}
+
+            {previewAttachment.attachments && (
+                <AttachmentPreviewModal
+                    attachments={previewAttachment.attachments}
+                    index={previewAttachment.ind}
+                    show={showAttachmentPreview}
+                    onClose={() => setShowAttachmentPreview(false)}
+                />
+            )}
+
         </>
     );
 }

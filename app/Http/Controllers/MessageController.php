@@ -73,7 +73,7 @@ class MessageController extends Controller
 
         $message = Message::create($data);
 
-        $attachment = [];
+        $attachments = [];
         
         if ($files) {
             foreach ($files as $file) {
@@ -89,9 +89,9 @@ class MessageController extends Controller
                 ];
 
                 $attachment = MessageAttachment::create($model);
-                $attachment[] = $attachment;
+                $attachments[] = $attachment;
             }
-            $message->attachments = $attachment;
+            $message->attachments = $attachments;
         }
 
         if ($receiverId) {

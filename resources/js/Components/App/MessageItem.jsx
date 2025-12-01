@@ -3,8 +3,9 @@ import ReactMarkdown from "react-markdown";
 import React from "react";
 import UserAvatar from "./UserAvatar";
 import { formatMessageDateLong } from "@/helpers";
+import MessageAttachments from "./MessageAttachments";
 
-const MessageItem = ({ message }) => {
+const MessageItem = ({ message, onAttachmentClick }) => {
     const currentUser = usePage().props.auth.user;
     const isCurrentUser = message.sender_id === currentUser.id;
 
@@ -34,6 +35,10 @@ const MessageItem = ({ message }) => {
                     ${isCurrentUser ? "bg-blue-600 text-white self-end" : "bg-slate-700 text-slate-100"}`}
                 >
                     <ReactMarkdown>{message.message}</ReactMarkdown>
+                    <MessageAttachments 
+                        attachments={message.attachments}
+                        attachmentClick={onAttachmentClick}
+                    />
                 </div>
             </div>
 
