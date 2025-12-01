@@ -30,7 +30,7 @@ const MessageItem = ({ message }) => {
 
                 {/* Bubble */}
                 <div
-                    className={`p-3 rounded-xl break-words 
+                    className={`p-3 rounded-xl break-words chat-message-content
                     ${isCurrentUser ? "bg-blue-600 text-white self-end" : "bg-slate-700 text-slate-100"}`}
                 >
                     <ReactMarkdown>{message.message}</ReactMarkdown>
