@@ -18,33 +18,22 @@ const MessageItem = ({ message }) => {
             {!isCurrentUser && <UserAvatar user={message.sender} />}
 
             <div className="flex flex-col max-w-[70%]">
-                {/* Tên người gửi (chỉ hiển thị nếu không phải current user) + thời gian */}
-                {!isCurrentUser && (
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-slate-100">
-                            {message.sender.name}
-                        </span>
-                        <time className="text-xs text-slate-400">
-                            {formatMessageDateLong(message.created_at)}
-                        </time>
-                    </div>
-                )}
 
-                {/* Chat bubble */}
+                {/* Time tùy thuộc bên trái/phải */}
+                <time
+                    className={`text-xs text-slate-400 mb-1 ${
+                        isCurrentUser ? "self-end" : "self-start"
+                    }`}
+                >
+                    {formatMessageDateLong(message.created_at)}
+                </time>
+
+                {/* Bubble */}
                 <div
-                    className={`p-3 rounded-xl break-words relative 
+                    className={`p-3 rounded-xl break-words 
                     ${isCurrentUser ? "bg-blue-600 text-white self-end" : "bg-slate-700 text-slate-100"}`}
                 >
-                    <ReactMarkdown>
-                        {message.message}
-                    </ReactMarkdown>
-
-                    {/* Thời gian nhỏ ở góc bubble nếu là current user */}
-                    {isCurrentUser && (
-                        <time className="text-[10px] opacity-50 absolute bottom-1 right-2">
-                            {formatMessageDateLong(message.created_at)}
-                        </time>
-                    )}
+                    <ReactMarkdown>{message.message}</ReactMarkdown>
                 </div>
             </div>
 

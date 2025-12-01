@@ -1,14 +1,15 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ChatLayout from '@/Layouts/ChatLayout';
-import { Head } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 import ConversationHeader from '@/Components/App/ConversationHeader';
 import MessageItem from '@/Components/App/MessageItem';
+import MessageInput from '@/Components/App/MessageInput';
+import { useEventBus } from '@/EventBus';
 
 function Home({ selectedConversation, messages }) {
     const [localMessages, setLocalMessages] = useState([])
     const messagesCtrRef = useRef(null)
+    const { on } = useEventBus();
 
     // useEffect chạy mỗi khi selectedConversation thay đổi
     useEffect(() => {
@@ -19,7 +20,33 @@ function Home({ selectedConversation, messages }) {
             // messagesCtrRef.current.scrollTop = scrollHeight
             messagesCtrRef.current.scrollTop = messagesCtrRef.current.scrollHeight
         }, 10)
+
+        const offCreated = on("message.created", (message) => {
+            console.log("message.created received", message);
+            let sender_id = parseInt(message.sender_id)
+            let receiver_id = parseInt(message.receiver_id)
+
+            if (
+                selectedConversation &&
+                selectedConversation.is_group &&
+                selectedConversation.id === message.group_id
+            ) {
+                setLocalMessages(prev => [...prev, message]);
+            }
+
+            if (
+                selectedConversation &&
+                (selectedConversation.id === sender_id ||
+                selectedConversation.id === receiver_id)
+            ) {
+                setLocalMessages(prev => [...prev, message]);
+            }
+        });
+
+        return () => offCreated();
+
     }, [selectedConversation]) // dependency: chạy lại khi người dùng chọn conversation khác
+
 
     useEffect(() => {
         setLocalMessages(messages ? messages.data.reverse() : [])
@@ -70,7 +97,7 @@ function Home({ selectedConversation, messages }) {
                             </div>
                         )}
                     </div>
-                    {/* <MessageInput conversation={selectedConversation} /> */}
+                    <MessageInput selectedConversation={selectedConversation} />
                 </>
             )}
         </>

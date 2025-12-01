@@ -6,6 +6,10 @@ import TextInput from '@/Components/TextInput';
 import ConversationItem from '@/Components/App/ConversationItem';
 
 const ChatLayout = ({ children }) => {
+    const page = usePage();
+    const conversations = page.props.conversations;
+    const selectedConversation = page.props.selectedConversation;
+
     const [onlineUsers, setOnlineUsers] = useState({});
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
@@ -81,7 +85,7 @@ const ChatLayout = ({ children }) => {
     }, [conversations]);
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout conversations={conversations}>
             <div className="flex-1 w-full flex overflow-hidden">
                 <div
                     className={`transition-all w-full sm:w-[300px] bg-slate-800 flex flex-col overflow-hidden 
