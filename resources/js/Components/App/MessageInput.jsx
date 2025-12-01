@@ -8,6 +8,7 @@ import { isAudio, isImage } from "@/helpers";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import AttachmentPreview from "./AttachmentPreview";
 import AudioRecorder from "./AudioRecorder";
+import { useEventBus } from "@/EventBus";
 
 const MessageInput = ({ selectedConversation }) => {
     const [newMessage, setNewMessage] = useState("");
@@ -15,6 +16,7 @@ const MessageInput = ({ selectedConversation }) => {
     const [inputErrorMessage, setInputErrorMessage] = useState("*");
     const [chosenFiles, setChosenFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(null);
+    const { emit } = useEventBus();
 
     const onFileChange = (ev) => {
         const files = ev.target.files;
@@ -34,6 +36,7 @@ const MessageInput = ({ selectedConversation }) => {
     const handleSend = () => {
         // Nếu không có tin nhắn và cũng không có file → dừng
         if (!newMessage.trim() && chosenFiles.length === 0) return;
+        emit('toast.show', 'Message sent succesfully')
 
         const formData = new FormData();
         formData.append("message", newMessage)
