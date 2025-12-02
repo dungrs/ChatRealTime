@@ -235,7 +235,7 @@ export default function AuthenticatedLayout({ conversations, header, children })
                 {children}
 
             </div>
-            <Toast />
+            {/* <Toast /> */}
             <NewMessageNotification />
         </>
     );

@@ -4,6 +4,7 @@ import React from "react";
 import UserAvatar from "./UserAvatar";
 import { formatMessageDateLong } from "@/helpers";
 import MessageAttachments from "./MessageAttachments";
+import MessageOptionsDropdown from "./MessageOptionsDropdown";
 
 const MessageItem = ({ message, onAttachmentClick }) => {
     const currentUser = usePage().props.auth.user;
@@ -31,9 +32,12 @@ const MessageItem = ({ message, onAttachmentClick }) => {
 
                 {/* Bubble */}
                 <div
-                    className={`p-3 rounded-xl break-words chat-message-content
+                    className={`p-3 rounded-xl break-words chat-message-content relative
                     ${isCurrentUser ? "bg-blue-600 text-white self-end" : "bg-slate-700 text-slate-100"}`}
-                >
+                >   
+                    {message.sender_id == currentUser.id && (
+                        <MessageOptionsDropdown message={message} />
+                    )}
                     <ReactMarkdown>{message.message}</ReactMarkdown>
                     <MessageAttachments 
                         attachments={message.attachments}

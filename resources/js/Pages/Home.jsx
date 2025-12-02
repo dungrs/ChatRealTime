@@ -41,33 +41,55 @@ function Home({ selectedConversation, messages }) {
     // Nhận tin nhắn mới từ EventBus
     // -----------------------------
     useEffect(() => {
+        if (!selectedConversation) return;
+
+        // Listener tin nhắn mới
         const offCreated = on("message.created", (message) => {
-            if (!selectedConversation) return;
-            console.log(selectedConversation)
             const isCurrentConversation =
                 (selectedConversation.is_group && selectedConversation.id === parseInt(message.group_id)) ||
                 (!selectedConversation.is_group && 
                     (selectedConversation.id === message.sender_id || selectedConversation.id === parseInt(message.receiver_id))
                 );
 
-            if (isCurrentConversation) {
-                setLocalMessages(prev => {
-                    // tránh duplicate message
-                    if (prev.some(m => m.id === message.id)) return prev;
-                    return [...prev, message];
-                });
+            if (!isCurrentConversation) return;
 
-                // Scroll xuống cuối khi nhận tin nhắn mới
-                setTimeout(() => {
-                    if (messagesCtrRef.current) {
-                        messagesCtrRef.current.scrollTop = messagesCtrRef.current.scrollHeight;
-                    }
-                }, 50);
-            }
+            setLocalMessages(prev => {
+                // tránh duplicate message
+                if (prev.some(m => m.id === message.id)) return prev;
+                return [...prev, message];
+            });
+
+            // Scroll xuống cuối sau khi update
+            setTimeout(() => {
+                messagesCtrRef.current?.scrollTo({ top: messagesCtrRef.current.scrollHeight, behavior: "smooth" });
+            }, 50);
         });
 
-        return () => offCreated();
+        // Listener tin nhắn bị xóa
+        const offDeleted = on("message.deleted", ({ message }) => {
+            const isCurrentConversation =
+                (selectedConversation.is_group && selectedConversation.id === parseInt(message.group_id)) ||
+                (!selectedConversation.is_group && 
+                    (selectedConversation.id === message.sender_id || selectedConversation.id === parseInt(message.receiver_id))
+                );
+
+            if (!isCurrentConversation) return;
+
+            setLocalMessages(prev => prev.filter(m => m.id !== message.id));
+
+            // Scroll xuống cuối sau khi xóa
+            setTimeout(() => {
+                messagesCtrRef.current?.scrollTo({ top: messagesCtrRef.current.scrollHeight, behavior: "smooth" });
+            }, 50);
+        });
+
+        // Cleanup khi unmount hoặc selectedConversation thay đổi
+        return () => {
+            offCreated();
+            offDeleted();
+        };
     }, [selectedConversation, on]);
+
 
     // -----------------------------
     // Load thêm tin nhắn cũ

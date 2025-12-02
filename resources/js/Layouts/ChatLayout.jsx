@@ -66,7 +66,6 @@ const ChatLayout = ({ children }) => {
     const messageCreated = (message) => {
         setLocalConversations((oldUsers) => {
             return oldUsers.map((u) => {
-                console.log(u);
                 if (message.receiver_id &&
                     !u.is_group &&
                     (u.id == message.sender_id || u.id == parseInt(message.receiver_id))
@@ -79,7 +78,7 @@ const ChatLayout = ({ children }) => {
                 if (
                     u.is_group &&
                     u.id == parseInt(message.group_id)
-                ) {
+                ) { 
                     u.last_message = message.message;
                     u.last_message_date = message.created_at
                     return u
@@ -90,9 +89,41 @@ const ChatLayout = ({ children }) => {
         })
     }
 
+    const messageDeleted = ({ prevMessage }) => {
+        if (!prevMessage) return;
+        setLocalConversations((oldUsers) => {
+            return oldUsers.map((u) => {
+                if (prevMessage.receiver_id &&
+                    !u.is_group &&
+                    (u.id === prevMessage.sender_id || u.id === prevMessage.receiver_id)
+                ) {
+                    console.log(u)
+                    u.last_message = prevMessage.message;
+                    u.last_message_date = prevMessage.created_at;
+                    return u;
+                }
+
+                if (
+                    u.is_group &&
+                    u.id === parseInt(prevMessage.group_id)
+                ) { 
+                    u.last_message = prevMessage.message;
+                    u.last_message_date = prevMessage.created_at
+                    return u
+                }
+
+                return u;
+            })
+        })
+    }
+
     useEffect(() => {
         const offCreated = on("message.created", messageCreated)
-        return () => offCreated()
+        const offDeleted = on("message.deleted", messageDeleted)
+        return () => {
+            offCreated();
+            offDeleted();
+        }
     }, [on])
 
     // SORT CONVERSATIONS

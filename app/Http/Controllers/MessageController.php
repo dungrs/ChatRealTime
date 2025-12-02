@@ -108,12 +108,45 @@ class MessageController extends Controller
     }
 
     public function destroy(Message $message) {
+        // 1️⃣ Kiểm tra xem người xóa có phải là người gửi tin nhắn không
+        // Nếu không phải, trả về lỗi Forbidden (400)
         if ($message->sender_id !== Auth::id()) {
             return response()->json(['message' => 'Forbidden'], 400);
         }
 
+        // 2️⃣ Khởi tạo biến để lưu group hoặc conversation liên quan
+        $group = null;
+        $conversation = null;
+
+        // 3️⃣ Kiểm tra tin nhắn thuộc group hay conversation 1-1
+        if ($message->group_id) {
+            // Nếu tin nhắn thuộc group, lấy group có last_message_id = message này
+            $group = Group::where('last_message_id', $message->id)->first();
+        } else {
+            // Nếu tin nhắn thuộc conversation 1-1 (không phải group)
+            $conversation = Conversation::where('last_message_id', $message->id)->first();
+        }
+        
+        // 5️⃣ Xóa tin nhắn
         $message->delete();
 
-        return response('', 204);
+        // 4️⃣ Lấy thông tin lastMessage trước khi xóa
+        if ($group) {
+            // Nếu là group, tìm lại group (có thể redundant)
+            $groupPrev = Group::find($group->id);
+            $lastMessage = $groupPrev->lastMessage; // Lấy tin nhắn cuối cùng hiện tại của group
+        } else if ($conversation) {
+            // Nếu là conversation 1-1
+            $conversationPrev = Conversation::find($conversation->id);
+            $lastMessage = $conversationPrev->lastMessage; // Lấy tin nhắn cuối cùng hiện tại của conversation
+        }
+
+
+        // 6️⃣ Trả về response JSON
+        // Nếu có tin nhắn cuối cùng (lastMessage) → trả về MessageResource của nó
+        // Nếu không còn tin nhắn nào → trả về null
+        return response()->json([
+            'message' => $lastMessage ? new MessageResource($lastMessage) : null
+        ]);
     }
 }

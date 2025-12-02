@@ -5,8 +5,6 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-
-
 Route::middleware(['auth', 'verified'])->group(function() {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');
 
