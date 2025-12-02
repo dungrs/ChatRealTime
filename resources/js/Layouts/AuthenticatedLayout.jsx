@@ -49,6 +49,16 @@ export default function AuthenticatedLayout({ conversations, header, children })
                             }`,
                     });
                 })
+            
+            if (conversation.is_group) {
+                window.Echo.private(`group.deleted.${conversation.id}`)
+                    .error((error) => {
+                        console.log(error)
+                    })
+                    .listen("GroupDeleted", (e) => {
+                        emit("group.deleted", {id: e.id, name: e.name})
+                    })
+            }
         });
 
         return () => {
@@ -65,6 +75,10 @@ export default function AuthenticatedLayout({ conversations, header, children })
                     }`
                 }
                 window.Echo.leave(channel)
+
+                if (conversation.is_group) {
+                    window.Echo.leave(`group.deleted.${conversation.id}`)
+                }
             })
         }
     }, [conversations])
@@ -235,7 +249,7 @@ export default function AuthenticatedLayout({ conversations, header, children })
                 {children}
 
             </div>
-            {/* <Toast /> */}
+            <Toast />
             <NewMessageNotification />
         </>
     );

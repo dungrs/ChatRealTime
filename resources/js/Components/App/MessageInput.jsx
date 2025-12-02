@@ -36,7 +36,6 @@ const MessageInput = ({ selectedConversation }) => {
     const handleSend = () => {
         // Nếu không có tin nhắn và cũng không có file → dừng
         if (!newMessage.trim() && chosenFiles.length === 0) return;
-        emit('toast.show', 'Message sent succesfully')
 
         const formData = new FormData();
         formData.append("message", newMessage)

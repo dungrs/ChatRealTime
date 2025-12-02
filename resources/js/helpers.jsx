@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 // Hàm định dạng ngày tin nhắn dạng "dài" (có thể hiển thị giờ nếu là hôm nay/hôm qua)
 export const formatMessageDateLong = (date) => {
     const now = new Date(); // Lấy thời gian hiện tại
@@ -139,3 +141,38 @@ export const formatBytes = (bytes, decimals = 2) => {
     // Trả về chuỗi ví dụ: "12.34 MB"
     return `${parseFloat(size.toFixed(dm))} ${sizes[i]}`;
 };
+
+export default function useOnlineTracking(setOnlineUsers) {
+    useEffect(() => {
+        if (!window.Echo) {
+            console.warn("Echo chưa được khởi tạo!");
+            return;
+        }
+
+        window.Echo.join("online")
+            .here((users) => {
+                const onlineObj = Object.fromEntries(
+                    users.map((u) => [u.id, u])
+                );
+                setOnlineUsers(onlineObj);
+            })
+            .joining((user) => {
+                setOnlineUsers((prev) => ({
+                    ...prev,
+                    [user.id]: user,
+                }));
+            })
+            .leaving((user) => {
+                setOnlineUsers((prev) => {
+                    const updated = { ...prev };
+                    delete updated[user.id];
+                    return updated;
+                });
+            })
+            .error((err) => console.error("Echo Error:", err));
+
+        return () => {
+            window.Echo.leave("online");
+        };
+    }, [setOnlineUsers]);
+}

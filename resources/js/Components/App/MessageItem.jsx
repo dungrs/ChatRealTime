@@ -1,14 +1,18 @@
 import { usePage } from "@inertiajs/react";
 import ReactMarkdown from "react-markdown";
-import React from "react";
+import { React, useState } from "react";
 import UserAvatar from "./UserAvatar";
-import { formatMessageDateLong } from "@/helpers";
+import useOnlineTracking, { formatMessageDateLong } from "@/helpers";
 import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
 
 const MessageItem = ({ message, onAttachmentClick }) => {
     const currentUser = usePage().props.auth.user;
     const isCurrentUser = message.sender_id === currentUser.id;
+
+    const [onlineUser, setOnlineUser] = useState({});
+    useOnlineTracking(setOnlineUser)
+    const isUserOnline = (userId) => !!onlineUser[userId];
 
     return (
         <div
@@ -17,7 +21,7 @@ const MessageItem = ({ message, onAttachmentClick }) => {
             }`}
         >
             {/* Avatar chỉ hiển thị bên trái nếu không phải current user */}
-            {!isCurrentUser && <UserAvatar user={message.sender} />}
+            {!isCurrentUser && <UserAvatar user={message.sender} online={isUserOnline(message.sender.id)} />}
 
             <div className="flex flex-col max-w-[70%]">
 
@@ -47,7 +51,7 @@ const MessageItem = ({ message, onAttachmentClick }) => {
             </div>
 
             {/* Avatar bên phải nếu là current user */}
-            {isCurrentUser && <UserAvatar user={currentUser} />}
+            {isCurrentUser && <UserAvatar user={currentUser} online={isUserOnline(message.sender_id)} />}
         </div>
     );
 };
