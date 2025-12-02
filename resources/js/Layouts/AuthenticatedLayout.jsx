@@ -13,58 +13,9 @@ export default function AuthenticatedLayout({ conversations, header, children })
     const { emit } = useEventBus();
 
     useEffect(() => {
-        conversations.forEach(conversation => {
-            let channel = `message.group.${conversation.id}`
-            if (conversation.is_user) {
-                channel = `message.user.${[
-                    parseInt(user.id),
-                    parseInt(conversation.id)
-                ]
-                    .sort((a, b) => a - b)
-                    .join("-")
-                }`
-            }
-            
-            window.Echo.private(channel)
-                .error((error) => {
-                    console.log(error)
-                })
-                .listen("SocketMessage", (e) => {
-                    const message = e.message
-
-                    emit("message.created", message);
-                    if (message.sender_id === user.id) {
-                        return;
-                    }
-
-                    emit("newMessageNotification", {
-                        user: message.sender,
-                        group_id: message.group_id,
-                        message:
-                            message.message ||
-                            `Shared ${
-                                message.attachments.length === 1
-                                    ? "an attachment"
-                                    : `${message.attachments.length} attachments`
-                            }`,
-                    });
-                })
-            
-            if (conversation.is_group) {
-                window.Echo.private(`group.deleted.${conversation.id}`)
-                    .error((error) => {
-                        console.log(error)
-                    })
-                    .listen("GroupDeleted", (e) => {
-                        emit("group.deleted", {id: e.id, name: e.name})
-                    })
-            }
-        });
-
-        return () => {
-            conversations.forEach((conversation) => {
-                let channel = `messages.group.${conversation.id}`
-
+        if (conversations) {
+            conversations.forEach(conversation => {
+                let channel = `message.group.${conversation.id}`
                 if (conversation.is_user) {
                     channel = `message.user.${[
                         parseInt(user.id),
@@ -74,12 +25,63 @@ export default function AuthenticatedLayout({ conversations, header, children })
                         .join("-")
                     }`
                 }
-                window.Echo.leave(channel)
+                
+                window.Echo.private(channel)
+                    .error((error) => {
+                        console.log(error)
+                    })
+                    .listen("SocketMessage", (e) => {
+                        const message = e.message
 
+                        emit("message.created", message);
+                        if (message.sender_id === user.id) {
+                            return;
+                        }
+
+                        emit("newMessageNotification", {
+                            user: message.sender,
+                            group_id: message.group_id,
+                            message:
+                                message.message ||
+                                `Shared ${
+                                    message.attachments.length === 1
+                                        ? "an attachment"
+                                        : `${message.attachments.length} attachments`
+                                }`,
+                        });
+                    })
+                
                 if (conversation.is_group) {
-                    window.Echo.leave(`group.deleted.${conversation.id}`)
+                    window.Echo.private(`group.deleted.${conversation.id}`)
+                        .error((error) => {
+                            console.log(error)
+                        })
+                        .listen("GroupDeleted", (e) => {
+                            emit("group.deleted", {id: e.id, name: e.name})
+                        })
                 }
-            })
+            });
+
+            return () => {
+                conversations.forEach((conversation) => {
+                    let channel = `messages.group.${conversation.id}`
+
+                    if (conversation.is_user) {
+                        channel = `message.user.${[
+                            parseInt(user.id),
+                            parseInt(conversation.id)
+                        ]
+                            .sort((a, b) => a - b)
+                            .join("-")
+                        }`
+                    }
+                    window.Echo.leave(channel)
+
+                    if (conversation.is_group) {
+                        window.Echo.leave(`group.deleted.${conversation.id}`)
+                    }
+                })
+            }
         }
     }, [conversations])
 
